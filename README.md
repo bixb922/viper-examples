@@ -38,10 +38,11 @@ add_to_array( my_array, 10 )
 viper_add_to_array( my_array, 10, len(my_array) )
 
 ```
-The viper function is about 15 times faster on my ESP32-S3 with PSRAM wih an array of 10000 
+This viper function is about 16 times faster on my ESP32-S3 with PSRAM wih an array of 10000. 
 
-The original add_to_array() function with @micropython.native decorator is about 1.6 times faster than the original function.
+In this example, the original add_to_array() function with @micropython.native decorator is about 1.6 times faster than the original function.
 
+Some have reported much higher performance gains, for example 100 times! 
 
 # The viper decorator
 
@@ -68,7 +69,9 @@ Most of the difficulties using the viper code emitter are related to the use of 
 Viper variables are "raw" variables and are not stored as MicroPython objects. In contrast the string, tuple, list and integer variables we all know are always stored ad MicroPython objects. 
 
 The viper code emitter detects viper variables at compile time, and generates very fast code for the operations. For example
-```x = 0``` or ```x = int(myfunction())``` will make `x` viper `int` variable. Now, `x = x + 1` will be done just with a very few machine code instructions.
+```x = 0``` or ```x = int(myfunction())``` will make `x` viper `int` variable. Now, `x = x + 1` will be compiled around 2 or 3 machine code instructions!
+
+Compile time means: when the .py file is analyzed by the MicroPython interpreter, or when mpy-cross is run.
 
 Please note that once assigned, the type of the variable cannot be changed (unlike regular Python), which is quite reasonable since there is no underlying object:
 
@@ -79,9 +82,9 @@ Please note that once assigned, the type of the variable cannot be changed (unli
     # `ViperTypeError: local 'x' has type 'object' but source is 'int'`
     # The reverse order is also not allowed.
 ```
-Well, I think this is bad style anyhow, it's just that the error message can be a bit confusing For example if you assign a non-viper integer (which is an object) to a viper `int` (which is the int?).
+Well, I think this is bad style anyhow.
 
-Be aware: The viper code emitter its of the code at compile time, determining the type of the variables. This is very unusual when coming from a Python background, where typing is dynamic and at runtime.
+Be aware: The viper code emitter analyzes of the code at compile time, determining the type of the variables. This is very unusual when coming from a Python background, where typing is dynamic and at runtime.
 
 
 In case you are familiar with C: The viper data types are similar to some C language data types:
@@ -109,15 +112,14 @@ The viper ```int```data type in viper code is a special data type for fast signe
 
 A viper `int` is different to the ```int``` we know in MicroPython, which is still available in viper decorated functions as  ```builtins.int```.  Hence this document will make a difference between a "viper ```int``` opposed to a ```builtins.int```.
 
-It is advisable to be aware at all times that `viper int` and `builtins.int` are different data types. 
+It is advisable to be aware at all times that `viper int` and `builtins.int` are different data types.
 
 ### Viper integer constants
 Viper integer constants are in the range -2\*\*30 to 2\*\*30-1. When you assign a viper constant to a variable, it automatically is a viper `int`.
 
-Integer expressions are evaluated to a integer at compile time.
-
 Be aware: integer constants don't have the full range of values a viper int value can hold. See next section for a discussion of this. See [here](##-making-sure-a-viper-int-is-a-viper-int) for a way to deal with integer constants.
 
+Integer expressions are evaluated compile time and reduced to a constant.
 
 ### Create viper ```int``` by assigning a value
 As it is usual in Python, a viper variable is of type viper ```int``` when  you assign viper ```int```value, either as a constant, integer expression or with the int() function. for example:
@@ -151,7 +153,7 @@ With the type hint, input parameters are converted on the fly to the viper `int`
 
 ## Making sure a viper `int` is a viper `int`
 
-Possible source of problems: when you initialize a viper int with a integer expression that falls outside of the signed 30 bit range (not 32 bit range), a `builtins.int` will be created instead, no warning. 
+Possible source of problems: when you initialize a viper int with a integer expression that falls outside of the signed 30 bit range (not the 32 bit range!), a `builtins.int` will be created instead, no warning. 
 
 Solution: Except for very short viper functions, you could initialize all viper `int` variables at the beginning setting them to zero (just as you might do in C language):
 ```py
@@ -176,6 +178,7 @@ Another way to make sure viper variables are always of the intended type, is to 
 ```py
     x = int(some expression)
 ```
+But this is a perhaps a little bit less readable.
 
 ### Differences of viper ```int``` and ```builtins.int``` data types
 
@@ -191,15 +194,27 @@ Arithmetic and logic operations for viper ```int``` are very fast, since there i
 
 There are no automatic conversion rules if a viper ```int``` is used together with other data types. For example, this code will raise a compile time error: "ViperTypeError: can't do binary op between 'object' and 'int'":
 ```py
-    my_float_variable = 1.0
+@micropython.viper
+def myfunction(my_argument):
     x:int = 2
-    my_float_variable = my_float_variable + x
+    x = my_argument + 1 # <- ViperTypeError: local 'x' has type 'int' but source is 'object'
+
+    my_float_variable = 1.0
+    my_float_variable = my_float_variable + x # <-- ViperTypeError: can't do binary op between 'object' and 'int'
+myfunction(1)
 ```
-To avoid that error message, the viper ```int```variable x must be converted explicitly to float:
+The 'object' in the error message refers to `my_argument` and `my_float_variable`. The 'int' in the error message refers to the `1` viper int constant.
+
+To avoid that error message, the viper ```int```variable x must be converted explicitly to float, and my_argument cast to a viper `int`.
 ```py
-    my_float_variable = 1.0
+@micropython.viper
+def myfunction(my_argument):
     x:int = 2
-    my_float_variable = my_float_variable + float(x)
+    x = int(my_argument) + 1 # <- ViperTypeError: local 'x' has type 'int' but source is 'object'
+
+    my_float_variable = 1.0
+    my_float_variable = my_float_variable + float(x) # <-- ViperTypeError: can't do binary op between 'object' and 'int'
+myfunction(1)
 ```
 
 A viper ```int``` is not an object, and thus does not support methods such as ```from_bytes()```or ```to_bytes()```. 
@@ -222,7 +237,7 @@ Within viper decorated functions, the int() function will cast an expression o a
 
 The int() function will return the 4 least significant bytes of the integer, similar to a C language expression: ```x && 0xffffffff```. If it is unclear that the input value is in the viper ```int``` range, the value has to be tested before casting. But in many practical applications, you can know beforehand the acceptable value ranges, and no additional overhead is incurred.
 
-In other words, beware: `ìnt()` just truncates values outside of the viper int range chopping off the excessive bytes, no exception raised.
+In other words, beware: `int()` just truncates values outside of the viper int range chopping off the excessive bytes, no exception raised.
 
 int() casting is very fast in viper code. 
 
@@ -601,3 +616,6 @@ Test code in this repository:
 * testviper.py Many tests
 * tuples_and-lists.py viper ints in tuples and lists
 * viper_native.py Comparison of times between viper and undecorated. Call function overhead.
+
+# (c) Copyright Hermann Paul von Borries
+

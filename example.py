@@ -57,4 +57,12 @@ with MeasureTime("Viper") as viper:
 
 print(f"plain/native {plain.time_usec/native.time_usec}")
 print(f"plain/viper {plain.time_usec/viper.time_usec}")
-                       
+
+@micropython.viper
+def myfunction(my_argument):
+    x:int = 2
+    x = int(my_argument) + 1 # <- ViperTypeError: local 'x' has type 'int' but source is 'object'
+
+    my_float_variable = 1.0
+    my_float_variable = my_float_variable + float(x) # <-- ViperTypeError: can't do binary op between 'object' and 'int'
+myfunction(1)
