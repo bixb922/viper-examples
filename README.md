@@ -88,7 +88,6 @@ Please note that once assigned, the type of a viper variable cannot be changed (
     # ViperTypeError: local 'x' has type 'int' but source is 'object'
     # The reverse order is also not allowed.
 ```
-Well, I think this is bad style anyhow.
 
 Be aware: The viper code emitter analyzes of the code at compile time, determining the type of the variables. This is very unusual when coming from a Python background, where typing is dynamic and at runtime.
 
