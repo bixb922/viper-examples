@@ -7,6 +7,11 @@ Read the official documentation here: https://docs.micropython.org/en/v1.9.3/pyb
 
 This document aims to provide more detailed information about the viper code emitter.
 
+# Notes
+This document is based on the interpretation of the examples provided in this repository. Feel free to check and reproduce the examples. Please report any question or issue in the issues section of this repository.
+
+If you like this, please star the repository.
+
 # An example
 ```py
 # Original Python function
