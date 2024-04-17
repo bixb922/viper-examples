@@ -1,3 +1,7 @@
+# (c) 2023 Hermann Paul von Borries
+# MIT License
+
+
 # This code will most probablly lock up the microcontroller
 
 @micropython.viper

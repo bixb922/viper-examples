@@ -79,13 +79,13 @@ The viper code emitter detects viper variables at compile time, and generates ve
 
 Compile time means: when the .py file is analyzed by the MicroPython interpreter, or when mpy-cross is run.
 
-Please note that once assigned, the type of the variable cannot be changed (unlike regular Python), which is quite reasonable since there is no underlying object:
+Please note that once assigned, the type of a viper variable cannot be changed (unlike regular Python), which is quite reasonable since there is no underlying object:
 
 ```py
     x = 1
     x = "hello" # This changes the viper int variable x to a string object, not allowed
     # The previous line raises a compile time error:
-    # `ViperTypeError: local 'x' has type 'object' but source is 'int'`
+    # ViperTypeError: local 'x' has type 'int' but source is 'object'
     # The reverse order is also not allowed.
 ```
 Well, I think this is bad style anyhow.
@@ -138,7 +138,9 @@ As it is usual in Python, a viper variable is of type viper ```int``` when  you 
 ```
 If the variable is created by assigning an expression, the viper code emitter will evaluate the expression at compile time.
 
-Be aware: Integer expressions outside the "small integer" range of MicroPython are not viper `int` but `builtins.int`.  On most architectures a small int falls between -2\*\*30-1 and 2\*\*30-1. For example:
+Be aware: Integer expressions outside what is called the "small integer" range of MicroPython are not viper `int` but `builtins.int`.  On most architectures a MicroPython small integer falls is -2\*\*30-1 and 2\*\*30-1. 
+
+For example:
 ```py
 @micropython.viper
 def myfunction();
@@ -146,7 +148,7 @@ def myfunction();
     y = 1<<30 # this is not a viper int
     z = 2**31-1  # this is not a viper int
 ```
-In all these cases a `builtins.int` variable will be created. See [here](##-making-sure-a-viper-int-is-a-viper-int) for a way to deal with integer constants.
+In all these cases a `builtins.int` variable will be created. See [here](##-making-sure-a-viper-int-is-a-viper-int) for a way prevent the problems described here.
 
 ### Create viper ```int``` with a type hint on the function parameter
 A second way to get a viper `int` is with a type hint (type annotation) of a function parameter:
@@ -159,7 +161,7 @@ With the type hint, `x` is converted on the fly to the viper `int` data type usi
 
 ## Making sure a viper `int` is a viper `int`
 
-There is a possible source of problems: when you initialize a viper int with a integer expression that falls outside of the signed 30 bit range (not the 32 bit range!), a `builtins.int` will be created instead, no warning. The same happens if you try initialize a viper int with a variable of type `builtins.int`. These errors can go unnoticed.
+There is a possible source of problems: when you initialize a viper `int` with a integer expression that falls outside of the signed 30 bit range (not the 32 bit range!), a `builtins.int` will be created instead, no warning. The same happens if you try initialize a viper int with a variable of type `builtins.int`. These errors can go unnoticed.
 
 Solution: Except for very short viper functions, you could initialize all viper `int` variables at the beginning setting them to zero (just as you might do in C language):
 ```py
@@ -493,6 +495,21 @@ In the previous example, if `foo()` is decorated with `@micropython.viper`, we g
 
 You can't make a viper variable nonlocal (compile-time error `ViperTypeError: local 'x' used before type known`)
 
+Beware: You can't change the type of a nonlocal variable inside a viper function to an integer. Example:
+```py
+def nonlocal_fails():
+    y = None
+    @micropython.viper
+    def internal_viper():
+        nonlocal y
+        viperx:int = 111
+        y = viperx # <--- this assignment will not work!
+        return y
+    return internal_viper()
+print(nonlocal_fails(), "expected result 111")
+```
+The actual result is 55, but depends on the value assigned (111). The device may freeze or give any error, so don't do this.
+
 ## Viper in classes
 A specific method (including `\_\_init\_\_`, `@staticmethod` and `@classmethod`) can have the @micropython.viper decorator.
 
@@ -604,7 +621,7 @@ Slices and viper: https://github.com/micropython/micropython/issues/6523
 
 32 bit integer operations: https://github.com/orgs/micropython/discussions/11259
 
-Another ecample manipulating manipulating GPIO: https://forum.micropython.org/viewtopic.php?f=18&t=8266
+Another example manipulating manipulating GPIO: https://forum.micropython.org/viewtopic.php?f=18&t=8266
 
 A TFT display driver using viper code, look at TFT_io.py: https://github.com/robert-hh/SSD1963-TFT-Library-for-PyBoard-and-RP2040
 
@@ -615,17 +632,23 @@ Step by step with a real problem: https://luvsheth.com/p/making-micropython-comp
 The MicroPython tests for viper have some examples, see all cases prefixed by "viper_": https://github.com/micropython/micropython/tree/master/tests/micropython
 
 Test code in this repository:
-* classes.py viper decorator in the context of classes
-* example.py the examples here
-* global_nonlocal.py tests of viper for global and nonlocal variables
-* int_uint_test.py tests of int/uint behaviour
-* integer_expressions.py viper and builtins.int integer expressions
-* odd_addresses.py my ESP32-S3 crashes with this script
-* testviper.py Many tests
-* tuples_and-lists.py viper ints in tuples and lists
-* viper_native.py Comparison of times between viper and undecorated. Call function overhead.
+* classes.py: viper decorator in the context of classes
+* example.py: the examples here
+* global_nonlocal.py: tests of viper for global and nonlocal variables
+* int_uint_test.py: tests of int/uint behaviour
+* integer_expressions.py: viper and builtins.int integer expressions
+* odd_addresses.py: my ESP32-S3 crashes with this script
+* testviper.py: Many tests
+* tuples_and_lists.py: viper ints in tuples and lists
+* viper_native.py: Comparison of times between viper and undecorated. Call function overhead.
+* more_examples/fft_int.py: a integer FFT (Fast Fourier Transform), with von Hann windowing, in viper code
+* more_examples/autocorrelation.py: autocorrelation noise reduction algorithm, implemented in viper code
 
 # Copyright notice
-(c) Copyright Hermann Paul von Borries
+This document is (c) Copyright Hermann Paul von Borries.
+
+The Python code in this repository is copyright (c) Hermann Paul von Borries, available under MIT License
+
+
 
 

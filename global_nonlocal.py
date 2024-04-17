@@ -1,3 +1,6 @@
+# (c) 2023 Hermann Paul von Borries
+# MIT License
+
 import builtins
 import sys
 
@@ -25,6 +28,18 @@ assert g == 111
 print(f"global test {h=}, expected 222")
 assert h == 222
 
+def nonlocal_fails():
+    y = None
+    @micropython.viper
+    def internal_viper():
+        nonlocal y
+        viperx:int = 0
+        y = viperx # <--- this assignment will not work!
+        return y
+    return internal_viper()
+print(nonlocal_fails(), "expected result 111")
+assert nonlocal_fails() == 111
+
 
 def nonlocal_test():
     x = 1
@@ -48,7 +63,7 @@ def nonlocal_test():
     print(f"nonlocal test {z=}, expected 111")
 
     assert x == 2
-    assert y == 111
+    assert y == 111 # <--- fails, returns 55 instead!!
     assert z == 111
 
 nonlocal_test()

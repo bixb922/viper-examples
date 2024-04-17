@@ -1,3 +1,6 @@
+# (c) 2023 Hermann Paul von Borries
+# MIT License
+
 from array import array
 import sys
 import builtins
@@ -212,8 +215,8 @@ kwfun(13,23,33)
 # kwfun(11,22) # <-- TypeError: function takes 3 positional arguments but 2 were given
 # kwfun(10) # <-- TypeError: function takes 3 positional arguments but 2 were given#
 
+
 @micropython.viper
-def hints_test(a:int, b:builtins.int )->int:
-    return a + int(b)
-print("hints test", hints_test(100, 200))
-assert hints_test(100,200) == 300
+def change_type():
+    x = 1
+    x = "hello" # <-- ViperTypeError: local 'x' has type 'int' but source is 'object'

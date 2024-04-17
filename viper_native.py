@@ -1,3 +1,6 @@
+# (c) 2023 Hermann Paul von Borries
+# MIT License
+
 # Viper example to measure time
 import machine
 machine.freq(240_000_000)

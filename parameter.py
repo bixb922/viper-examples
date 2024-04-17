@@ -1,3 +1,6 @@
+# (c) 2023 Hermann Paul von Borries
+# MIT License
+
 import builtins
 
 # Verify what happens when a viper int is passed to a function

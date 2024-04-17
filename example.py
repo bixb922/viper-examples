@@ -1,3 +1,6 @@
+# (c) 2023 Hermann Paul von Borries
+# MIT License
+
 class MeasureTime:
     def __init__(self, title ):
         self.title = title
