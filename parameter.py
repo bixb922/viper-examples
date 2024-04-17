@@ -107,3 +107,14 @@ try:
     viperfun("123")
 except TypeError:
     print("OK: can't cast string to viper int in a parameter")
+    
+print("test return object")
+@micropython.viper
+def function_returns_object(x)->object:
+    return x
+h = function_returns_object("a string")
+assert isinstance(h,str)
+h = function_returns_object((1,2,3))
+assert isinstance(h,tuple)
+h = function_returns_object([1,2,3])
+assert isinstance(h,list)

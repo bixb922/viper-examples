@@ -58,6 +58,7 @@ Viper code is compiled and runs very fast, especially when using the viper data 
 
 The @micropython.viper directive is a compile-time directive and activates the viper code emitter. The viper code emitter does static (compile-time) analysis of the code do determine integer variables and emits machine code to handle integer operations. It also activates the very fast pointer data types.
 
+All things nice that MicroPython does, will continue to work. What is affected is mostly how integer variables work.
 
 # `@micropython.viper` vs. `@micropython.native` decorator
 
@@ -226,9 +227,7 @@ myfunction(1)
 
 A viper ```int``` is not an object, and thus does not support methods such as ```from_bytes()```or ```to_bytes()```. 
 
-```isinstance()``` will return the same value for a viper ```int```and a ```builtins.int``` and will not allow to distinguish these types.
-
-The \*\* operator (exponentiation, \_\_pow\_\_) is not implemented for viper ```int```.
+The \*\* operator (exponentiation, `__pow__`) is not implemented for viper ```int```.
 
 ### ```int()``` casting
 
@@ -368,7 +367,7 @@ def fun():
 
 Note that since the array element length is 4 bytes, you have to multiply by 4 yourself. The ptr32, ptr16 and ptr8 addresses are byte addresses. 
 
-Be aware: Some architectures may reject ptr32 access of pointers that are not multiple of four. Accessing odd bytes will most probably crash the program, way to trap that as an exception.
+Be aware: Some architectures may reject ptr32 access of pointers that are not multiple of four. Accessing odd bytes will most probably crash the program, no way to trap that as an exception.
 
 # Viper function parameters and return values
 
@@ -384,6 +383,17 @@ function returns_integer(param1:int)->int:
 ```
 The conversion of the return value back to `builtins.int` is done automatically.
 
+If the value returned by the function is any other object, use `object` as return type annotation:
+```py
+def function_returns_object(x)->object:
+    return x
+h = function_returns_object("a string")
+assert isinstance(h,str)
+h = function_returns_object((1,2,3))
+assert isinstance(h,tuple)
+h = function_returns_object([1,2,3])
+assert isinstance(h,list)
+```
 Viper functions do not accept keyword arguments nor optional arguments.
 
 Somewhere the docs state a maximum of 4 arguments for a viper function, that seems not to be a restriction anymore.
@@ -510,7 +520,7 @@ print(nonlocal_fails(), "expected result 111")
 The actual result is 55, but depends on the value assigned (111). The device may freeze or give any error, so don't do this.
 
 ## Viper in classes
-A specific method (including `\_\_init\_\_`, `@staticmethod` and `@classmethod`) can have the @micropython.viper decorator.
+A specific method (including `__init__`, `@staticmethod` and `@classmethod`) can have the @micropython.viper decorator.
 
 The complete class can be decorated:
 ```py
@@ -630,7 +640,9 @@ Step by step with a real problem: https://luvsheth.com/p/making-micropython-comp
 
 The MicroPython tests for viper have some examples, see all cases prefixed by "viper_": https://github.com/micropython/micropython/tree/master/tests/micropython
 
-Test code in this repository:
+Viper code examples in this repository:
+* more_examples/fft_int.py: a integer FFT (Fast Fourier Transform), with von Hann windowing, in viper code
+* more_examples/autocorrelation.py: autocorrelation noise reduction algorithm, implemented in viper code
 * classes.py: viper decorator in the context of classes
 * example.py: the examples here
 * global_nonlocal.py: tests of viper for global and nonlocal variables
@@ -640,8 +652,7 @@ Test code in this repository:
 * testviper.py: Many tests
 * tuples_and_lists.py: viper ints in tuples and lists
 * viper_native.py: Comparison of times between viper and undecorated. Call function overhead.
-* more_examples/fft_int.py: a integer FFT (Fast Fourier Transform), with von Hann windowing, in viper code
-* more_examples/autocorrelation.py: autocorrelation noise reduction algorithm, implemented in viper code
+
 
 # Copyright notice
 This document is (c) Copyright Hermann Paul von Borries.
