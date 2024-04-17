@@ -24,7 +24,8 @@ def add_to_array( a, n ):
 
 # The viper function, taking advantage of the viper data types
 @micropython.viper
-# The function declaration uses type hints to cast parameters 
+# The function declaration uses type hints (type annotations
+# to cast parameters 
 # and return value to/from viper data types.
 # pa is a pointer to memory (very fast)
 # Since pa does not carry information about the array length,
@@ -148,17 +149,17 @@ def myfunction();
 In all these cases a `builtins.int` variable will be created. See [here](##-making-sure-a-viper-int-is-a-viper-int) for a way to deal with integer constants.
 
 ### Create viper ```int``` with a type hint on the function parameter
-A second way to get a viper `int` is with a type hint of a function parameter:
+A second way to get a viper `int` is with a type hint (type annotation) of a function parameter:
 ```py
 @micropython.viper
 def myfunction(x:int):
 ```
-With the type hint, input parameters are converted on the fly to the viper `int` data type using the viper int() function (see "```int()``` casting" below).
+With the type hint, `x` is converted on the fly to the viper `int` data type using the viper int() function (see "```int()``` casting" below).
 
 
 ## Making sure a viper `int` is a viper `int`
 
-Possible source of problems: when you initialize a viper int with a integer expression that falls outside of the signed 30 bit range (not the 32 bit range!), a `builtins.int` will be created instead, no warning. 
+There is a possible source of problems: when you initialize a viper int with a integer expression that falls outside of the signed 30 bit range (not the 32 bit range!), a `builtins.int` will be created instead, no warning. The same happens if you try initialize a viper int with a variable of type `builtins.int`. These errors can go unnoticed.
 
 Solution: Except for very short viper functions, you could initialize all viper `int` variables at the beginning setting them to zero (just as you might do in C language):
 ```py
@@ -505,11 +506,11 @@ class MyClass:
 ```
 Instance variables such as ```self.a``` can only be MicroPython objects and can never be of a viper data type (remember that a viper `int` is not an object). 
 
-You can assign to self.x (the viper int gets converted to a `builtins.int`) but operations such `self.x = self.x + viper_integer` requiere to convert the viper integer to a `builtins.int`: `self.x = self.x + builtins.int(viper_integer)`
+You can assign a viper `int ` to a instance variable like self.x. The viper int gets converted to a `builtins.int` automatically, Operations such `self.x = self.x + viper_integer` requiere to convert the viper integer to a `builtins.int`: `self.x = self.x + builtins.int(viper_integer)`
 
 
 ## Slices
-Viper integers cannot be used in slices. The following code will not work:
+Viper integers cannot be used in slices. This is a restriction. The following code will not work:
 ```py
     x = bytearray((1,2,3,4,5))
     print("function slice", x[0:2])
@@ -534,6 +535,8 @@ def myfunction():
     limit:int = 0
     step:int = 0
 ```
+
+You can't use `builtins.int` as type hint, and there is no `type` statement in MicroPython. So `builtins.int` will be always without type hint.
 
 ## Test if a variable is of type viper int
 In compile time:
@@ -622,5 +625,7 @@ Test code in this repository:
 * tuples_and-lists.py viper ints in tuples and lists
 * viper_native.py Comparison of times between viper and undecorated. Call function overhead.
 
-# (c) Copyright Hermann Paul von Borries
+# Copyright notice
+(c) Copyright Hermann Paul von Borries
+
 
