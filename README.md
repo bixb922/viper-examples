@@ -58,16 +58,20 @@ Viper code is compiled and runs very fast, especially when using the viper data 
 
 The @micropython.viper directive is a compile-time directive and activates the viper code emitter. The viper code emitter does static (compile-time) analysis of the code do determine integer variables and emits machine code to handle integer operations. It also activates the very fast pointer data types.
 
-All things nice that MicroPython does, will continue to work. What is affected is mostly how integer variables work.
+All things nice that MicroPython does, will continue to work. What is affected is mostly how integer variables and access to arrays work.
 
-# `@micropython.viper` vs. `@micropython.native` decorator
+# @micropython.viper vs. @micropython.native decorator
 
 The @micropython.native decorator is another means to speeds up code, but does not require special data types or constructs. It covers most of the MicroPython language functionality without change, except a very few restrictions. 
 
 When not using the viper data types, performance of viper and native is similar. In fact, the viper code emitter is an extension of the native code emitter. However since most code has at least some integer variables, viper code may be faster than native code, sometimes even without change.
 
+Advantages of the @micropython.native decorator: no change to the code is needed.
 
-# The viper data types: `int`, `uint`, `ptr32`, `ptr16` and `ptr8`
+Advantage of the @micropython.viper decorator: the result can be faster, especially if integer and array operations are involved. But it is necessary to change the code.
+
+
+# The viper data types: int, uint, ptr32, ptr16 and ptr8
 
 These data types are very fast. They are not implemented as an MicroPython object but as a raw variable. They can be only used within a viper decorated function.
 
@@ -112,7 +116,7 @@ In case you are familiar with C: The viper data types are similar to some C lang
 * The MicroPython `int` object we all know is different from the viper `int` inside a viper function. If needed, the MicroPython `int` can still be accessed as `builtins.int` (`import builtins` first)
 * Operations are very fast
 
-## The viper ```int```data type
+## The viper int data type
 
 The viper ```int```data type in viper code is a special data type for fast signed integer operations. A viper `int` can hold values from -2\*\*31-1 to 2\*\*31, i.e. this is a 32 bit signed integer.
 
@@ -123,12 +127,12 @@ It is advisable to be aware at all times that `viper int` and `builtins.int` are
 ### Viper integer constants
 Viper integer constants are in the range -2\*\*30 to 2\*\*30-1. When you assign a viper constant to a variable, it automatically is a viper `int`.
 
-Be aware: integer constants don't have the full range of values a viper int value can hold. See next section for a discussion of this. See [here](##-making-sure-a-viper-int-is-a-viper-int) for a way to deal with integer constants.
+Be aware: integer constants don't have the full range of values a viper int value can hold, they are signed 31 bit integers. 
 
 Integer expressions are evaluated compile time and reduced to a constant.
 
-### Create viper ```int``` by assigning a value
-As it is usual in Python, a viper variable is of type viper ```int``` when  you assign viper ```int```value, either as a constant, integer expression or with the int() function. for example:
+### Create viper int by assigning a value
+As it is usual in Python, a viper variable is of type viper `int when  you assign viper ```int```value, either as a constant, integer expression or with the int() function. for example:
 ```py
     x = 0
     y = int(some_function_returning_an_integer())
@@ -150,7 +154,7 @@ def myfunction();
 ```
 In all these cases a `builtins.int` variable will be created. See [here](##-making-sure-a-viper-int-is-a-viper-int) for a way prevent the problems described here.
 
-### Create viper ```int``` with a type hint on the function parameter
+### Create viper int with a type hint on the function parameter
 A second way to get a viper `int` is with a type hint (type annotation) of a function parameter:
 ```py
 @micropython.viper
@@ -159,7 +163,7 @@ def myfunction(x:int):
 With the type hint, `x` is converted on the fly to the viper `int` data type using the viper int() function (see "```int()``` casting" below).
 
 
-## Making sure a viper `int` is a viper `int`
+## Making sure a viper int is a viper int
 
 There is a possible source of problems: when you initialize a viper `int` with a integer expression that falls outside of the signed 30 bit range (not the 32 bit range!), a `builtins.int` will be created instead, no warning. The same happens if you try initialize a viper int with a variable of type `builtins.int`. These errors can go unnoticed.
 
@@ -188,7 +192,7 @@ Another way to make sure viper variables are always of the intended type, is to 
 ```
 But this is a perhaps a little bit less readable.
 
-### Differences of viper ```int``` and ```builtins.int``` data types
+### Differences of viper int and builtins.int data types
 
 Viper ```int``` variables allow values from -2\*\*31 to 2\*\*31-1, whereas ```builtins.int``` variables have no practical range limit. For a `builtins.int`, if the value grows a lot, more memory will be allocated as needed.
 
@@ -229,12 +233,12 @@ A viper ```int``` is not an object, and thus does not support methods such as ``
 
 The \*\* operator (exponentiation, `__pow__`) is not implemented for viper ```int```.
 
-### ```int()``` casting
+### int() casting
 
-Within viper decorated functions, the int() function will cast an expression o a viper ```int```. Examples:
+Within viper decorated functions, the int() function will cast an expression o a viper `int`. Examples:
 ```py
    x = int(len(some_array)) # Many MicroPython functions return builtins.int
-   x = int(2\*\*30) # \*\* is not implemented for viper int and returns a builtins.int
+   x = int(2**30) # \*\* is not implemented for viper int and returns a builtins.int
    x = int(1) # Here int() is not necessary
    x = int(1+2) # Here int() is not necessary, 1+2 is a viper int expression
    x = int(my_int_function())+1 # Use int() for any external function that returns a integer
@@ -247,7 +251,7 @@ In other words, beware: `int()` just truncates values outside of the viper int r
 
 int() casting is very fast in viper code. 
 
-## The viper `uint` data type
+## The viper uint data type
 
 This data type is in most aspects similar to viper `int` but the range is 0 to 2\*\*32-1, i.e. it's a unsigned 32 bit integer.
 
@@ -267,8 +271,8 @@ def test_uint_int_assignments():
     print(f"{y=} int(y)={y=:08x}, expected 0xffffffff")
 ```
 
-## The viper `ptr32`, `ptr16` and `ptr8` data types
-These data types are pointers to memory, similar to a C language `int *pointer;`. This is rather unusual for Python, where no pointers exist and memory access is well hidden within objects that protect that access.
+## The viper ptr32, ptr16 and ptr8 data types
+These data types are pointers to memory, similar to a C language `long *p;` or `unsigned char *p`. This is rather unusual for Python, where no pointers exist and memory access is well hidden within objects that protect that access.
 
 If x is for example a ptr32, x[0] is the four bytes at the address the pointer is pointing to, x[1] the next four bytes, etc. 
 
@@ -306,7 +310,7 @@ def myfunction()->int:
 
 The argument to `ptr32()`, `ptr16()` or `ptr8()` can be a viper int, a uint or a bultins.int, no difference. Only the part needed for an address will be extracted.
 
-You will have to search the microcontroller data sheet for the correct locations and meaning of each bit of the device registers. However, this type of manipulation can be very fast. Be aware: on a ESP32, MicroPython runs on top of FreeRTOS, which steals some CPU cycles every now and then, and can cause unwanted delays in viper code.
+You will have to search the microcontroller data sheet for the correct locations and meaning of each bit of the device registers. However, this type of manipulation can be very fast. Be aware: on a ESP32, MicroPython runs on top of FreeRTOS, which steals some CPU cycles every now and then, and can cause small but unwanted delays in viper code.
 
 The `uctypes` module has an `addressof()` function. The result can also be converted to a pointer:
 ```py
