@@ -374,7 +374,7 @@ Note that since the array element length is 4 bytes, you have to multiply by 4 y
 Be aware: Some architectures may reject ptr32 access of pointers that are not multiple of four. Accessing odd bytes will most probably crash the program, no way to trap that as an exception.
 
 # Viper function parameters and return values
-From the point of view of the caller, viper functions behave just like any other MicroPython function. The workings of the viper variables is hidden from the caller.
+From the point of view of the caller, viper functions behave just like any other MicroPython functions. The workings of the viper variables is hidden from the caller.
 
 For integer parameters, use the `int` or `uint` type hint to get automatic conversion to a viper int. The conversion is done internally by MicroPython using the `int()` or `uint()` cast operator respectively.
 
@@ -405,9 +405,7 @@ Somewhere the docs state a maximum of 4 arguments for a viper function, that see
 
 The static analysis that MicroPython does is viper function by viper function. No information is carried over from the analysis of one function to the other.
 
-# Other topics
-
-## Passing a viper variable to a function
+## Passing a viper variable to a called function
 In a viper decorated function, you can certainly call another function. The called function can be @micropython.viper decorated, @micropython.native decorated or plain (undecorated), a bound or unbound method, there is no difference. 
 
 However, call overhead for a viper function is lower than call overhead for a undecorated function.
@@ -450,6 +448,7 @@ A side effect of this behaviour is that `type(viper_variable)` always returns cl
 
 Talking about detecting type: `isinstance(viper_variable,int)` will give a compile-time error `NotImplementedError: conversion to object`, since `int` is a viper data type, not a MicroPython class. However, `isinstance(viper_variable, builtins.int)` will return `True` since the viper_variable has been converted to a MicroPython int. 
 
+# Other topics
 
 ## Range vs. while
 
