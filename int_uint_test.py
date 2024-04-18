@@ -72,4 +72,10 @@ def test_uint_int_assignments():
     
 test_uint_int_assignments()
 
-
+@micropython.viper
+def wrap_around():
+    
+    y = 2**15
+    x = 2**17
+    print(f"viper arithmetic {x}*{y}={x*y}")
+wrap_around()

@@ -197,7 +197,7 @@ But this is a perhaps a little bit less readable.
 Viper ```int``` variables allow values from -2\*\*31 to 2\*\*31-1, whereas ```builtins.int``` variables have no practical range limit. For a `builtins.int`, if the value grows a lot, more memory will be allocated as needed.
 
 As a result, arithmetic operations on viper variables behave like operations in the C language 32 bit signed integer operations, for example:
-* Adding and subtracting wrap around if exceeding the range
+* Adding and subtracting wrap around if exceeding the range, for example `131072*32768=0`, since the result overflows 32 bits (just like C)
 * Shift left (```x<<1```): the bits shifted beyond the 32 most significant bit get lost. 
 * No overflow exception
 
@@ -374,20 +374,21 @@ Note that since the array element length is 4 bytes, you have to multiply by 4 y
 Be aware: Some architectures may reject ptr32 access of pointers that are not multiple of four. Accessing odd bytes will most probably crash the program, no way to trap that as an exception.
 
 # Viper function parameters and return values
-
-For arrays and bytearrays, use the ptr32, ptr16 and ptr8 type hints in the function parameters to get fast access to the arrays. 
+From the point of view of the caller, viper functions behave just like any other MicroPython function. The workings of the viper variables is hidden from the caller.
 
 For integer parameters, use the `int` or `uint` type hint to get automatic conversion to a viper int. The conversion is done internally by MicroPython using the `int()` or `uint()` cast operator respectively.
 
-If the function returns a value, a return type hint must be supplied, example:
+For arrays and bytearrays, use the ptr32, ptr16 and ptr8 type hints in the function parameters to get fast access to the arrays. 
+
+If the function returns a viper variable, a return type hint must be supplied, example:
 ```py
 @micropython.viper
 function returns_integer(param1:int)->int:
     return 1
 ```
-The conversion of the return value back to `builtins.int` is done automatically.
+The conversion of the return value back to `builtins.int` is done automatically. 
 
-If the value returned by the function is any other object, use `object` as return type annotation:
+If the value returned by the function is any other object, you do not need a type hint. You can, however, use `object` as return type hint:
 ```py
 def function_returns_object(x)->object:
     return x
@@ -402,7 +403,7 @@ Viper functions do not accept keyword arguments nor optional arguments.
 
 Somewhere the docs state a maximum of 4 arguments for a viper function, that seems not to be a restriction anymore.
 
-
+The static analysis that MicroPython does is viper function by viper function. No information is carried over from the analysis of one function to the other.
 
 # Other topics
 
@@ -643,6 +644,8 @@ Use of viper decorator: https://github.com/orgs/micropython/discussions/11157
 Step by step with a real problem: https://luvsheth.com/p/making-micropython-computations-run
 
 The MicroPython tests for viper have some examples, see all cases prefixed by "viper_": https://github.com/micropython/micropython/tree/master/tests/micropython
+
+Search https://forum.micropython.org and https://github.com/orgs/micropython/discussions for viper. There are many insights and examples.
 
 Viper code examples in this repository:
 * more_examples/fft_int.py: a integer FFT (Fast Fourier Transform), with von Hann windowing, in viper code

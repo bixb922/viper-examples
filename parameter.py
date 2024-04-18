@@ -113,8 +113,43 @@ print("test return object")
 def function_returns_object(x)->object:
     return x
 h = function_returns_object("a string")
+print("function_returns_object returns", h)
 assert isinstance(h,str)
 h = function_returns_object((1,2,3))
+print("function_returns_object returns", h)
 assert isinstance(h,tuple)
 h = function_returns_object([1,2,3])
+print("function_returns_object returns", h)
 assert isinstance(h,list)
+
+# See if return hint needed if function returns non-viper object
+@micropython.viper
+def function_returns_no_type(x):
+    return x
+h = function_returns_no_type("a string")
+print("function_returns_no_type returns", h)
+assert isinstance(h,str)
+h = function_returns_no_type((1,2,3))
+print("function_returns_no_type returns", h)
+assert isinstance(h,tuple)
+h = function_returns_no_type([1,2,3])
+print("function_returns_no_type returns", h)
+assert isinstance(h,list)
+
+# Any cannot be used
+#from types import Any
+#@micropython.viper
+#def function_returns_any(x)->Any: # <-- will fail with ViperTypeError: unknown type 'Any'
+#    return x
+
+@micropython.viper
+def function_a(y)->int:
+    return int(function_b(y)) # <-- must cast, MP does not know what this returns
+@micropython.viper
+def function_b(x:int)->int:
+    return x+1
+assert function_a(1) == 2
+# the argument gets converted to a viper int somewhere in between
+# So adding 1 to a positive number wraps around
+assert function_a(0x7fffffff) < 0
+
