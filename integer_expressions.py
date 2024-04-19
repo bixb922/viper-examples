@@ -41,29 +41,47 @@ def detect_viper_int_range():
 
     
 detect_viper_int_range()
-sys.exit()
-#=====================
+
+@micropython.viper
+def viper_expression():
+    x = 1
+    # Viper expressions are truncated even when not assigned to a viper int
+    print(f"{x=} {x<<31=} expected: negative number")
+    assert x << 31 < 0
+    print(f"{1<<31=} expected: positive number")
+    assert 1<<31>builtins.int(0)
+    b = builtins.int(1)
+    b = builtins.int(x << 31)
+    print(f"builtins.int = x<<31 is {b}")
+    # This is unexpected behavior. The value is truncated even before assigning!!
+    # so x=1;x=x<<31 is not equal to x = 1<<31
+viper_expression()  
+
 @micropython.viper
 def fun():
-    x = 1
-    print(f"{x=} {x<<31=} expected: negative number")
-    print(f"{1<<31=} expected:negative number")
-    y = 1<<2 + 1 
-    if y<<31 < 0 :
+    y = (1<<2) + 1
+    print(f"{y=} {y=:08x}")
+    y = y << 31
+    print(f"{y=} {y=:08x}")
+    if y < 0:
         print("1<<2+1 is of type viper int")
     else:
         print("1<<2+1 is of type builtins.int")
         assert False
-        
+    print("")
+    
     z = 2*3+1
-    if z<<31 < 0:
+    z = z << 31
+    if z < 0:
         print("2*3+1 is of type viper int")
     else:
         print("2*3 is of type builtins.int")
         assert False
-        
+    print("")
+    
     k = 1 + 2
-    if k<<31 < 0:
+    k = k << 31
+    if k < 0:
         print("1+2 is of type viper int")
     else:
         print("1+2 is of type builtins.int")
@@ -72,7 +90,8 @@ def fun():
     print("")
     # Works up to <<29, larger than that will yield ViperTypeError: can't do binary op between 'object' and 'int'
     m = (1 << 29) + 1
-    if m<<31 < 0:
+    m = m << 31
+    if m < 0:
         print(f"1<<29 is of type viper int")
     else:
         print(f"1<<29 is of type builtins.int")
@@ -82,18 +101,20 @@ def fun():
     print("")
      # Works up to <<29, larger than that will yield ViperTypeError: can't do binary op between 'object' and 'int'
     p = 2**3-1
-    if p<<31 < 0:
+    p = p << 31
+    if p < 0:
         print(f"2**3+1 is of type viper int")
     else:
         print(f"2**3+1 is of type builtins.int")
         assert False
     print(f"{p=} {p=:08x}")   
-    
+    print("")
 
     q = 0x3fffffff
     # Works up to 0x3fffff, 0x7ffffff will give
     # ViperTypeError: can't do binary op between 'object' and 'int'
-    if q<<31 < 0:
+    q = q << 31
+    if q < 0:
         print(f"0xffffff is of type viper int")
     else:
         print(f"0xffffff is of type builtins.int")
@@ -102,32 +123,16 @@ def fun():
     
 
 fun()
-sys.exit()
+
 
 @micropython.viper
-def fun2():
-    x = 0
-    x = 1
-    if x<<31 < 0:
-        print("x is viper int")
-    else:
-        print("NOT EXPECTED x is no viper int")
-        assert False
-fun2()
-
-@micropython.viper
-def fun3():
-    x = 1
-    if x<<31 < 0:
-        print("x is viper int")
-    else:
-        print("NOT EXPECTED x is no viper int")
-        assert False
-    # x = 1>>31 # <-- ViperTypeError: local 'x' has type 'int' but source is 'object'
+def shift_left():
+    x:int = 1
+    y:int = 0
+    for i in range(28,36):
+        y = x << int(i)
+        print(f"shift left viper 1<<{i:2d}={y:11d}={y:08x}")
+        #>>> UNEXPECTED
+    assert y == 0 
     
-    # This creates a builtins.int
-    z = 1<<31 
-    z = z<<builtins.int(10)
-    assert z == builtins.int(0)
-    
-fun3()
+shift_left()
